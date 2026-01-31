@@ -12,10 +12,22 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create server .env from secrets
+        run: |
+          mkdir -p server
+          cat > server/.env <<EOF
+          DATABRICKS_HOST=${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_HTTP_PATH=${{ secrets.DATABRICKS_HTTP_PATH }}
+          DATABRICKS_TOKEN=${{ secrets.DATABRICKS_TOKEN }}
+          PORT=${{ secrets.PORT }}
+          EOF
     permissions:
       contents: read #This is required for actions/checkout
 
-    steps:
+       steps:
       - uses: actions/checkout@v4
 
       - name: Set up Node.js version
@@ -62,4 +74,5 @@ jobs:
           app-name: 'reactappdataa'
           slot-name: 'Production'
           package: .
+
           
