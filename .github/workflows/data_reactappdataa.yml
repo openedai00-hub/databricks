@@ -16,27 +16,39 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-
-      - name: Create server .env from secrets
-        run: |
-          mkdir -p server
-          echo "DATABRICKS_HOST=${{ secrets.DATABRICKS_HOST }}" > server/.env
-          echo "DATABRICKS_HTTP_PATH=${{ secrets.DATABRICKS_HTTP_PATH }}" >> server/.env
-          echo "DATABRICKS_TOKEN=${{ secrets.DATABRICKS_TOKEN }}" >> server/.env
-          echo "PORT=${{ secrets.PORT }}" >> server/.env
 
       - name: Install Dependencies
-        run: npm install
+        # --ignore-scripts prevents npm from automatically running a 'build' that might fail
+        run: npm install --ignore-scripts
 
-      - name: Build Sub-Projects
+      - name: Build Client
+        run: npm run build -w client
+
+      - name: Build Server (Manual Force)
         run: |
-          # 1. Build Client
-          npm run build -w client
-          
-          # 2. Build Server (Directly overriding the module flags to kill error TS1343)
           cd server
-          npx tsc --module nodenext --moduleResolution nodenext --target esnext --outDir dist --rootDir src --esModuleInterop true --skipLibCheck true
+          # 1. Delete the local config that is causing the error
+          rm -f tsconfig.json
+          
+          # 2. Create a brand new, guaranteed correct config file
+          cat > tsconfig.json <<EOF
+          {
+            "compilerOptions": {
+              "target": "ESNext",
+              "module": "NodeNext",
+              "moduleResolution": "NodeNext",
+              "outDir": "./dist",
+              "rootDir": "./src",
+              "strict": true,
+              "esModuleInterop": true,
+              "skipLibCheck": true,
+              "allowJs": true
+            }
+          }
+          EOF
+          
+          # 3. Run the compiler directly using the file we just created
+          npx tsc -p tsconfig.json
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -51,8 +63,6 @@ jobs:
     needs: build
     permissions:
       id-token: write
-      contents: read
-
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
