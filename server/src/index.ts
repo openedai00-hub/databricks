@@ -1,14 +1,9 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { ENV } from './env.js';   // FIXED: Added .js
-import router from './routes.js'; // FIXED: Added .js
+import { ENV } from './env.js';
+import router from './routes.js';
 import 'dotenv/config';
-
-// ESM __dirname Fix
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -26,7 +21,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
-// Serve Static Files 
+// Serve Static Files
 const clientDistPath = path.resolve(process.cwd(), 'client/dist');
 app.use(express.static(clientDistPath));
 
