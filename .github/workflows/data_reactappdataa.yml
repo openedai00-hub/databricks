@@ -18,51 +18,28 @@ jobs:
           node-version: '22'
 
       - name: Install Dependencies
-        # --ignore-scripts prevents npm from automatically running a 'build' that might fail
-        run: npm install --ignore-scripts
+        run: npm install
 
-      - name: Build Client
-        run: npm run build -w client
-
-      - name: Build Server (Manual Force)
+      - name: Build Projects
         run: |
+          # Build Client
+          npm run build -w client
+          # Build Server - navigating directly to avoid workspace script issues
           cd server
-          # 1. Delete the local config that is causing the error
-          rm -f tsconfig.json
-          
-          # 2. Create a brand new, guaranteed correct config file
-          cat > tsconfig.json <<EOF
-          {
-            "compilerOptions": {
-              "target": "ESNext",
-              "module": "NodeNext",
-              "moduleResolution": "NodeNext",
-              "outDir": "./dist",
-              "rootDir": "./src",
-              "strict": true,
-              "esModuleInterop": true,
-              "skipLibCheck": true,
-              "allowJs": true
-            }
-          }
-          EOF
-          
-          # 3. Run the compiler directly using the file we just created
-          npx tsc -p tsconfig.json
+          npm run build
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: |
-            .
-            !**/node_modules/**
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
       id-token: write
+      contents: read
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
