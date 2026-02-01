@@ -12,10 +12,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js version
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: '22'
           cache: 'npm'
 
       - name: Create server .env from secrets
@@ -31,15 +31,14 @@ jobs:
 
       - name: Build Sub-Projects
         run: |
-          # 1. Build the React Client
+          # 1. Build Client
           npm run build -w client
           
-          # 2. Build the Server
-          # We navigate into the folder and force the flags that resolve the import.meta error
+          # 2. Build Server (Directly overriding the module flags to kill error TS1343)
           cd server
-          npx tsc --project tsconfig.json --module NodeNext --moduleResolution NodeNext --target ESNext
+          npx tsc --module nodenext --moduleResolution nodenext --target esnext --outDir dist --rootDir src --esModuleInterop true --skipLibCheck true
 
-      - name: Upload artifact for deployment job
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
@@ -55,7 +54,7 @@ jobs:
       contents: read
 
     steps:
-      - name: Download artifact from build job
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: node-app
@@ -68,7 +67,6 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_6F40690EAB89405798BE205F3C1D748E }}
 
       - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'reactappdataa'
