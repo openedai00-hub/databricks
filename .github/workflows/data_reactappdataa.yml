@@ -9,20 +9,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Node.js version
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '22.x'
           cache: 'npm'
 
       - name: Create server .env from secrets
-        # Creating the .env inside /server before the build starts
         run: |
           mkdir -p server
           cat > server/.env <<EOF
@@ -33,11 +29,11 @@ jobs:
           EOF
 
       - name: Install Dependencies
-        # Installs for root, /client, and /server via NPM Workspaces
+        # This installs dependencies for the root and all workspaces (client & server)
         run: npm install
 
       - name: Build Sub-Projects
-        # Both are now active since your server has a build script
+        # Builds the React frontend and the TypeScript backend
         run: |
           npm run build -w client
           npm run build -w server
@@ -46,7 +42,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          # We upload the whole project minus the heavy node_modules
+          # Azure will perform its own 'npm install' or use the build manifest
+          path: |
+            .
+            !**/node_modules/**
 
   deploy:
     runs-on: ubuntu-latest
