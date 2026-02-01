@@ -19,8 +19,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '22.x'
+          cache: 'npm'
 
       - name: Create server .env from secrets
+        # Creating the .env inside /server before the build starts
         run: |
           mkdir -p server
           cat > server/.env <<EOF
@@ -30,17 +32,15 @@ jobs:
           PORT=${{ secrets.PORT }}
           EOF
 
-      - name: Install and Build
+      - name: Install Dependencies
+        # Installs for root, /client, and /server via NPM Workspaces
+        run: npm install
+
+      - name: Build Sub-Projects
+        # Both are now active since your server has a build script
         run: |
-          # Install and build Client
-          cd client
-          npm install
-          npm run build
-          cd ..
-          # Install Server dependencies
-          cd server
-          npm install
-          cd ..
+          npm run build -w client
+          npm run build -w server
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
