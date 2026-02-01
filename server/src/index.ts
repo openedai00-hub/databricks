@@ -21,18 +21,15 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
-// Serve Static Files
+// Serve Static Files (Vite build output)
 const clientDistPath = path.resolve(process.cwd(), 'client/dist');
 app.use(express.static(clientDistPath));
 
-// SPA Catch-all
+// SPA Catch-all (must be after API + static)
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
     res.sendFile(path.join(clientDistPath, 'index.html'));
   }
 });
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+const PORT = N
