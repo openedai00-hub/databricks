@@ -19,22 +19,22 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Build Projects
-        run: |
-          # 1. Build Client
-          npm run build -w client
-          
-          # 2. Build Server (Directly calling the new script in package.json)
-          cd server
-          npm run build
+      - name: Build Client
+        run: npm run build -w client
+
+      - name: Build Server
+        run: npm run build -w server
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: |
+            .
+            !**/node_modules/**
+            !**/.git/**
 
   deploy:
     runs-on: ubuntu-latest
@@ -55,7 +55,7 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_86CDFCE3A8E246E283EC5904A3C654D6 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_6F40690EAB89405798BE205F3C1D748E }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'reactappdataa'
