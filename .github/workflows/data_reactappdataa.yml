@@ -21,29 +21,28 @@ jobs:
       - name: Create server .env from secrets
         run: |
           mkdir -p server
-          cat > server/.env <<EOF
-          DATABRICKS_HOST=${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_HTTP_PATH=${{ secrets.DATABRICKS_HTTP_PATH }}
-          DATABRICKS_TOKEN=${{ secrets.DATABRICKS_TOKEN }}
-          PORT=${{ secrets.PORT }}
-          EOF
+          echo "DATABRICKS_HOST=${{ secrets.DATABRICKS_HOST }}" > server/.env
+          echo "DATABRICKS_HTTP_PATH=${{ secrets.DATABRICKS_HTTP_PATH }}" >> server/.env
+          echo "DATABRICKS_TOKEN=${{ secrets.DATABRICKS_TOKEN }}" >> server/.env
+          echo "PORT=${{ secrets.PORT }}" >> server/.env
 
       - name: Install Dependencies
-        # This installs dependencies for the root and all workspaces (client & server)
         run: npm install
 
       - name: Build Sub-Projects
-        # Builds the React frontend and the TypeScript backend
         run: |
+          # 1. Build the React Client
           npm run build -w client
-          npm run build -w server
+          
+          # 2. Build the Server
+          # We navigate into the folder and force the flags that resolve the import.meta error
+          cd server
+          npx tsc --project tsconfig.json --module NodeNext --moduleResolution NodeNext --target ESNext
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          # We upload the whole project minus the heavy node_modules
-          # Azure will perform its own 'npm install' or use the build manifest
           path: |
             .
             !**/node_modules/**
