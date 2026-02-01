@@ -1,57 +1,28 @@
-import express, { Request, Response } from 'express'
-import cors from 'cors'
-import { ENV } from './env'
-import { runQuery } from './databricks'
+import express from 'express';
+import cors from 'cors';
+import { ENV } from './env';
+import router from './routes'; 
+import 'dotenv/config';
 
-process.on('unhandledRejection', (e) => {
-  console.error('[UNHANDLED REJECTION]', e)
-  process.exit(1)
-})
-process.on('uncaughtException', (e) => {
-  console.error('[UNCAUGHT EXCEPTION]', e)
-  process.exit(1)
-})
+const app = express();
 
-console.log('[BOOT] ENV:', {
-  PORT: ENV.PORT,
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Log environment status on boot for debugging
+console.log('[BOOT] Checking Variables:', {
   HOST: !!ENV.DATABRICKS_HOSTNAME,
   PATH: !!ENV.DATABRICKS_HTTP_PATH,
   TOKEN: !!ENV.DATABRICKS_TOKEN
-})
+});
 
-const app = express()
-app.use(express.json())
-app.use(cors())
+// Routes
+app.use('/api', router);
+app.get('/health', (_req, res) => res.json({ ok: true, timestamp: new Date() }));
 
-app.get('/api/health', (_req: Request, res: Response) => res.json({ ok: true }))
+const PORT = Number(process.env.PORT || 8787);
 
-app.get('/api/employees', async (_req: Request, res: Response) => {
-  try {
-    const rows = await runQuery('SELECT * FROM workspace.demo_db.employees LIMIT 100')
-    res.json({ rows })
-  } catch (e: any) {
-    res.status(500).json({ error: e?.message || 'Internal Server Error' })
-  }
-})
-
-app.post('/api/query', async (req: Request, res: Response) => {
-  try {
-    const { sql } = (req.body || {}) as { sql?: string }
-    if (!sql) return res.status(400).json({ error: 'Missing sql' })
-
-    console.log('[SQL]', sql)
-    const rows = await runQuery(sql)
-    res.json({ rows })
-  } catch (e: any) {
-    console.error('[QUERY ERROR]', e?.message || e)
-    res.status(500).json({ error: e?.message || 'Internal Server Error' })
-  }
-})
-
-const server = app.listen(Number(ENV.PORT) || 8787, () => {
-  console.log(`API on http://localhost:${ENV.PORT || 8787}`)
-})
-server.on('error', (err) => {
-  console.error('[SERVER LISTEN ERROR]', err)
-  process.exit(1)
-})
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is live on port ${PORT}`);
+});
