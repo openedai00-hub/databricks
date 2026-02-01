@@ -2,12 +2,8 @@
   "name": "databricks-proxy",
   "version": "1.0.0",
   "type": "module",
-  "engines": {
-    "node": ">=22.0.0"
-  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "prebuild": "rimraf dist",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js"
   },
@@ -21,8 +17,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^22.0.0",
-    "rimraf": "^6.0.1",
-    "tsx": "^4.19.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "tsx": "^4.19.2"
   }
 }
